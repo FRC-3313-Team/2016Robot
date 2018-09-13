@@ -29,7 +29,7 @@ public class Robot extends IterativeRobot {
 	Talon Feeder = new Talon(4);
 	Joystick joy1 = new Joystick(1);
 	Button Button1 = new JoystickButton(joy1, 2);
-	TankDrive drive = new TankDrive(new Talon(0), new Talon(1));
+	TankDrive drive = new TankDrive(new Talon(1), new Talon(0));
 
 	/**
 	 * it is 2:04 A.M. my sanity is fading help
@@ -114,7 +114,7 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void teleopPeriodic() {
 		// Drive
-		drive.tankDrive(-joy1.getAxis(AxisType.kY), joy1.getRawAxis(5));
+		drive.tankDrive(-joy1.getRawAxis(1), joy1.getRawAxis(5));
 		// Dont worry about this error. It should work for now until this method is
 		// changed permanently in the future.
 
