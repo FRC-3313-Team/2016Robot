@@ -2,7 +2,6 @@ package org.usfirst.frc.team3313.robot;
 
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Joystick;
-import edu.wpi.first.wpilibj.Joystick.AxisType;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.buttons.Button;
 import edu.wpi.first.wpilibj.buttons.JoystickButton;
@@ -24,8 +23,7 @@ public class Robot extends IterativeRobot {
 	final String customAuto = "My Auto";
 	String autoSelected;
 	SendableChooser<String> chooser = new SendableChooser<>();
-	Talon Shooter1 = new Talon(2);
-	Talon Shooter2 = new Talon(3);
+	Talon Shooter = new Talon(3);
 	Talon Feeder = new Talon(4);
 	Joystick joy1 = new Joystick(1);
 	Button Button1 = new JoystickButton(joy1, 2);
@@ -114,7 +112,9 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void teleopPeriodic() {
 		// Drive
-		drive.tankDrive(-joy1.getRawAxis(1), joy1.getRawAxis(5));
+
+		advancedDrive(-joy1.getX(), joy1.getRawAxis(5));
+		//drive.tankDrive(-joy1.getRawAxis(1), joy1.getRawAxis(5));
 		// Dont worry about this error. It should work for now until this method is
 		// changed permanently in the future.
 
@@ -124,21 +124,13 @@ public class Robot extends IterativeRobot {
 
 		// Shooter
 		if (joy1.getRawButton(6)) {
-			Shooter1.set(1);
-			Shooter2.set(-1);
+			Shooter.set(1);
 		} else {
-			Shooter1.set(0);
-			Shooter2.set(0);
-		}
-		// Feed Default
-		if (joy1.getRawButton(5)) {
-			Feeder.set(-.5);
-		} else {
-			Feeder.set(0);
+			Shooter.set(0);
 		}
 		// Feed Double
-		if (joy1.getRawButton(1)) {
-			Feeder.set(1);
+		if (joy1.getRawButton(5)) {
+			Feeder.set(-1);
 		} else {
 			Feeder.set(0);
 		}
@@ -149,5 +141,41 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void testPeriodic() {
+	}
+
+	// FIX DEADZONES
+	private void advancedDrive(double rightStick, double leftStick) {
+		// rightStick uses Y axis, leftStick uses rawAxis(5)
+		if (rightStick == 0 && leftStick == 0) {
+			if (noMovement == ticksToWaitAfterNoMovement) {
+				currentSpeed = 0; // Reset the speed when no movement
+				noMovement = 0;
+			} else {
+				noMovement++;
+			}
+			return;
+		}
+		rightStick = -rightStick * .5; // Invert
+		if (respectMax) {
+			double respectedValue = ((rightStick / 100) * maxSpeed); // New Respected speed
+			// if (controller.getRawButton(5)) { // Ignore the advanced drive
+			// drive.tankDrive(-(controller.getY() / 1.25) + (-controller.getRawAxis(5) /
+			// 2),
+			// (-controller.getY() / 1.25) + -(-controller.getRawAxis(5) / 2));
+			// }
+			if (currentSpeed != ticksTillFullSpeed) {
+				currentSpeed++; // Calculate the next tick speed based off maxSpeed / ticksTillFullSpeed
+				if (respectedValue <= (incrementSpeed * currentSpeed)) {
+					drive.tankDrive(respectedValue + (-leftStick / 2), respectedValue + (leftStick / 2));
+				} else {
+					drive.tankDrive((incrementSpeed * currentSpeed) + (-leftStick / 2),
+							(incrementSpeed * currentSpeed) + (leftStick / 2));
+				}
+			} else {
+				drive.tankDrive(respectedValue + (-leftStick / 2), respectedValue + (leftStick / 2));
+			}
+			// double acclerationValue = (respectedValue / ticksTillFullSpeed) *
+			// currentSpeed;
+		}
 	}
 }
