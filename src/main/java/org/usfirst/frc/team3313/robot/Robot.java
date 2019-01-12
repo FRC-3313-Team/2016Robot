@@ -1,13 +1,10 @@
 package org.usfirst.frc.team3313.robot;
 
-import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.Talon;
-import edu.wpi.first.wpilibj.buttons.Button;
-import edu.wpi.first.wpilibj.buttons.JoystickButton;
+import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.networktables.NetworkTableEntry;
 
@@ -19,24 +16,23 @@ import edu.wpi.first.networktables.NetworkTableEntry;
  *         the package after creating this project, you must also update the
  *         manifest file in the resource directory.
  */
-public class Robot extends IterativeRobot {
-	// DO NOT TOUCH (unless you know what you're doing that is)
-	Joystick main, func;
-	String autoSelected;
-	SendableChooser<Double> chooser = new SendableChooser<>();
+public class Robot extends TimedRobot {
+	// Constants
+	private static final double DEFAULT_MOVEMENT_SPEED = 0.75;
+	private static final double DEFAULT_TURN_SPEED = 0.75;
+
+	// Tank Drive, see TankDrive.java
+	TankDrive drive = new TankDrive(new Talon(1), new Talon(0));
+
+	// Create motor controllers for ball shooting mechanism
 	Talon Shooter = new Talon(3);
 	Talon Feeder = new Talon(4);
 	Joystick joy1 = new Joystick(1);
-	Button Button1 = new JoystickButton(joy1, 2);
-	TankDrive drive = new TankDrive(new Talon(1), new Talon(0));
 
-	// Experimental SB code
+	// Shuffleboard configurations
 	ShuffleboardTab tab = Shuffleboard.getTab("Drive");
-	NetworkTableEntry SBmaxSpeed = tab.add("Max Speed", 1).getEntry();
-
-	/**
-	 * it is 2:04 A.M. my sanity is fading help
-	 */
+	NetworkTableEntry SBmaxSpeed = tab.add("Drive Speed", DEFAULT_MOVEMENT_SPEED).getEntry();
+	NetworkTableEntry SBmaxTurn = tab.add("Turn Speed", DEFAULT_TURN_SPEED).getEntry();
 
 	// Accelerated Movement
 	double incrementSpeed = 0; // DO NOT TOUCH
@@ -44,10 +40,8 @@ public class Robot extends IterativeRobot {
 	int noMovement = 0; // DO NOT TOUCH
 	int ticksToWaitAfterNoMovement = 40;
 	int ticksTillFullSpeed = 7; // 20 ~= 1 sec
-	double maxSpeed = 100; // value where 100 is 100% of motor speed
+	// double maxSpeed = 100; // value where 100 is 100% of motor speed
 	boolean respectMax = true; // Whether or not to respect full movement of joystick or not, meaning
-	double DEFAULT_MOVEMENT_SPEED = 1;
-	double DEFAULT_TURN_SPEED = 1;
 	// End //max movement on joystick is the same as the maximum speed versus
 	// deadzone.
 
@@ -106,11 +100,7 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void teleopPeriodic() {
 		// Drive
-
-		advancedDrive(-joy1.getX(), joy1.getRawAxis(5));
-		//drive.tankDrive(-joy1.getRawAxis(1), joy1.getRawAxis(5));
-		// Dont worry about this error. It should work for now until this method is
-		// changed permanently in the future.
+		advancedDrive(joy1.getX(), joy1.getRawAxis(5));
 
 		// Shooter
 		// Button/Power directory: Right Bumper=100% Power (add as needed for minimal
@@ -152,24 +142,24 @@ public class Robot extends IterativeRobot {
 			return;
 		}
 
-		rightStick = -rightStick * DEFAULT_TURN_SPEED; // Invert
+		rightStick = rightStick * SBmaxTurn.getDouble(DEFAULT_TURN_SPEED); // Multiply by configured turn speed
 		if (respectMax) {
-			double respectedValue = ((rightStick / 100) * maxSpeed); // New Respected speed
 			// if (controller.getRawButton(5)) { // Ignore the advanced drive
 			// drive.tankDrive(-(controller.getY() / 1.25) + (-controller.getRawAxis(5) /
 			// 2),
 			// (-controller.getY() / 1.25) + -(-controller.getRawAxis(5) / 2));
 			// }
+
 			if (currentSpeed != ticksTillFullSpeed) {
 				currentSpeed++; // Calculate the next tick speed based off maxSpeed / ticksTillFullSpeed
-				if (respectedValue <= (incrementSpeed * currentSpeed)) {
-					drive.tankDrive(respectedValue + (-leftStick * movementSpeedMultiplier), respectedValue + (leftStick * movementSpeedMultiplier));
+				if (rightStick <= (incrementSpeed * currentSpeed)) {
+					drive.tankDrive(rightStick + (-leftStick * movementSpeedMultiplier), rightStick + (leftStick * movementSpeedMultiplier));
 				} else {
 					drive.tankDrive((incrementSpeed * currentSpeed) + (-leftStick * movementSpeedMultiplier),
 							(incrementSpeed * currentSpeed) + (leftStick * movementSpeedMultiplier));
 				}
 			} else {
-				drive.tankDrive(respectedValue + (-leftStick * movementSpeedMultiplier), respectedValue + (leftStick * movementSpeedMultiplier));
+				drive.tankDrive(rightStick + (-leftStick * movementSpeedMultiplier), rightStick + (leftStick * movementSpeedMultiplier));
 			}
 			// double acclerationValue = (respectedValue / ticksTillFullSpeed) *
 			// currentSpeed;
