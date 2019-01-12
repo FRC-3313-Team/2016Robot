@@ -17,9 +17,11 @@ import edu.wpi.first.networktables.NetworkTableEntry;
  *         manifest file in the resource directory.
  */
 public class Robot extends TimedRobot {
-	// Constants
-	private static final double DEFAULT_MOVEMENT_SPEED = 0.75;
-	private static final double DEFAULT_TURN_SPEED = 0.75;
+	// Accelerated Movement Configurations
+	private static final double DEFAULT_MOVEMENT_SPEED = 0.75; // Default speed multiplier, configured on Shuffleboard
+	private static final double DEFAULT_TURN_SPEED = 0.75; // Default turn multiplier, configured on Shuffleboard
+	private static final boolean RESPECT_MAX = true; // Whether or not to respect full movement of joystick or not, meaning
+													 // max movement on joystick is the same as the maximum speed versus deadzone.
 
 	// Tank Drive, see TankDrive.java
 	TankDrive drive = new TankDrive(new Talon(1), new Talon(0));
@@ -40,10 +42,6 @@ public class Robot extends TimedRobot {
 	int noMovement = 0; // DO NOT TOUCH
 	int ticksToWaitAfterNoMovement = 40;
 	int ticksTillFullSpeed = 7; // 20 ~= 1 sec
-	// double maxSpeed = 100; // value where 100 is 100% of motor speed
-	boolean respectMax = true; // Whether or not to respect full movement of joystick or not, meaning
-	// End //max movement on joystick is the same as the maximum speed versus
-	// deadzone.
 
 	/**
 	 * This function is run when the robot is first started up and should be used
@@ -61,12 +59,10 @@ public class Robot extends TimedRobot {
 		// int noMovement = 0; //DO NOT TOUCH
 		// int ticksToWaitAfterNoMovement = 40;
 		// int ticksTillFullSpeed = 7; //20 ~= 1 sec
-		// double maxSpeed = 85; //value where 100 is 100% of motor speed
 		// boolean respectMax = true; //Whether or not to respect full movement of
 		// joystick or not, meaning
 		// End //max movement on joystick is the same as the maximum speed versus
-		// deadzone.
-
+		// deadzone
 	}
 
 	/**
@@ -143,7 +139,7 @@ public class Robot extends TimedRobot {
 		}
 
 		rightStick = rightStick * SBmaxTurn.getDouble(DEFAULT_TURN_SPEED); // Multiply by configured turn speed
-		if (respectMax) {
+		if (RESPECT_MAX) {
 			// if (controller.getRawButton(5)) { // Ignore the advanced drive
 			// drive.tankDrive(-(controller.getY() / 1.25) + (-controller.getRawAxis(5) /
 			// 2),
