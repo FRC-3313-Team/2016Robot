@@ -1,12 +1,14 @@
 package org.usfirst.frc.team3313.robot;
 
+import com.kauailabs.navx.frc.AHRS;
+
+import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.SerialPort;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
-import edu.wpi.first.cameraserver.CameraServer;
-import edu.wpi.first.networktables.NetworkTableEntry;
 
 //Import properly this time 
 /**
@@ -18,18 +20,22 @@ import edu.wpi.first.networktables.NetworkTableEntry;
  */
 public class Robot extends TimedRobot {
 	// Accelerated Movement Configurations
-	private static final double DEFAULT_MOVEMENT_SPEED = 0.75; // Default speed multiplier, configured on Shuffleboard
-	private static final double DEFAULT_TURN_SPEED = 0.75; // Default turn multiplier, configured on Shuffleboard
-	private static final boolean RESPECT_MAX = true; // Whether or not to respect full movement of joystick or not, meaning
-													 // max movement on joystick is the same as the maximum speed versus deadzone.
+	private static final double DEFAULT_MOVEMENT_SPEED = 4; // Default speed multiplier, configured on Shuffleboard
+	private static final double DEFAULT_TURN_SPEED = 1.5; // Default turn multiplier, configured on Shuffleboard
+	private static final boolean RESPECT_MAX = true; // Whether or not to respect full movement of joystick or not,
+														// meaning
+														// max movement on joystick is the same as the maximum speed
+														// versus deadzone.
 
 	// Tank Drive, see TankDrive.java
 	TankDrive drive = new TankDrive(new Talon(1), new Talon(0));
 
 	// Create motor controllers for ball shooting mechanism
 	Talon Shooter = new Talon(3);
-	Talon Feeder = new Talon(4);
-	Joystick joy1 = new Joystick(1);
+	Talon Feeder = new Talon(2);
+	Joystick joy1 = new Joystick(0);
+
+	AHRS ahrs = new AHRS(SerialPort.Port.kMXP);
 
 	// Shuffleboard configurations
 	ShuffleboardTab tab = Shuffleboard.getTab("Drive");
@@ -50,8 +56,8 @@ public class Robot extends TimedRobot {
 
 	@Override
 	public void robotInit() {
-		CameraServer.getInstance().startAutomaticCapture();
-		CameraServer.getInstance().startAutomaticCapture();
+		// CameraServer.getInstance().startAutomaticCapture();
+		// CameraServer.getInstance().startAutomaticCapture();
 
 		// Accelerated Movement DEFAULTS DO NOT ERASE/UNCOMMENT
 		// double incrementSpeed = 0; //DO NOT TOUCH
@@ -95,6 +101,8 @@ public class Robot extends TimedRobot {
 	 */
 	@Override
 	public void teleopPeriodic() {
+		System.out.println(ahrs.getAngle());
+
 		// Drive
 		advancedDrive(joy1.getX(), joy1.getRawAxis(5));
 
@@ -149,13 +157,15 @@ public class Robot extends TimedRobot {
 			if (currentSpeed != ticksTillFullSpeed) {
 				currentSpeed++; // Calculate the next tick speed based off maxSpeed / ticksTillFullSpeed
 				if (rightStick <= (incrementSpeed * currentSpeed)) {
-					drive.tankDrive(rightStick + (-leftStick * movementSpeedMultiplier), rightStick + (leftStick * movementSpeedMultiplier));
+					drive.tankDrive(rightStick + (-leftStick * movementSpeedMultiplier),
+							rightStick + (leftStick * movementSpeedMultiplier));
 				} else {
 					drive.tankDrive((incrementSpeed * currentSpeed) + (-leftStick * movementSpeedMultiplier),
 							(incrementSpeed * currentSpeed) + (leftStick * movementSpeedMultiplier));
 				}
 			} else {
-				drive.tankDrive(rightStick + (-leftStick * movementSpeedMultiplier), rightStick + (leftStick * movementSpeedMultiplier));
+				drive.tankDrive(rightStick + (-leftStick * movementSpeedMultiplier),
+						rightStick + (leftStick * movementSpeedMultiplier));
 			}
 			// double acclerationValue = (respectedValue / ticksTillFullSpeed) *
 			// currentSpeed;
