@@ -1,10 +1,7 @@
 package org.usfirst.frc.team3313.robot;
 
-import com.kauailabs.navx.frc.AHRS;
-
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.Joystick;
-import edu.wpi.first.wpilibj.SerialPort;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
@@ -22,10 +19,6 @@ public class Robot extends TimedRobot {
 	// Accelerated Movement Configurations
 	private static final double DEFAULT_MOVEMENT_SPEED = 4; // Default speed multiplier, configured on Shuffleboard
 	private static final double DEFAULT_TURN_SPEED = 1.5; // Default turn multiplier, configured on Shuffleboard
-	private static final boolean RESPECT_MAX = true; // Whether or not to respect full movement of joystick or not,
-														// meaning
-														// max movement on joystick is the same as the maximum speed
-														// versus deadzone.
 
 	// Tank Drive, see TankDrive.java
 	TankDrive drive = new TankDrive(new Talon(1), new Talon(0));
@@ -34,8 +27,6 @@ public class Robot extends TimedRobot {
 	Talon Shooter = new Talon(3);
 	Talon Feeder = new Talon(2);
 	Joystick joy1 = new Joystick(0);
-
-	AHRS ahrs = new AHRS(SerialPort.Port.kMXP);
 
 	// Shuffleboard configurations
 	ShuffleboardTab tab = Shuffleboard.getTab("Drive");
@@ -101,10 +92,8 @@ public class Robot extends TimedRobot {
 	 */
 	@Override
 	public void teleopPeriodic() {
-		System.out.println(ahrs.getAngle());
-
 		// Drive
-		advancedDrive(joy1.getX(), joy1.getRawAxis(5));
+		drive.tankDrive(-joy1.getRawAxis(1), joy1.getRawAxis(5));
 
 		// Shooter
 		// Button/Power directory: Right Bumper=100% Power (add as needed for minimal
@@ -129,46 +118,5 @@ public class Robot extends TimedRobot {
 	 */
 	@Override
 	public void testPeriodic() {
-	}
-
-	// FIX DEADZONES
-	private void advancedDrive(double rightStick, double leftStick) {
-		double movementSpeedMultiplier = SBmaxSpeed.getDouble(DEFAULT_MOVEMENT_SPEED);
-
-		// rightStick uses Y axis, leftStick uses rawAxis(5)
-		if (rightStick == 0 && leftStick == 0) {
-			if (noMovement == ticksToWaitAfterNoMovement) {
-				currentSpeed = 0; // Reset the speed when no movement
-				noMovement = 0;
-			} else {
-				noMovement++;
-			}
-			return;
-		}
-
-		rightStick = rightStick * SBmaxTurn.getDouble(DEFAULT_TURN_SPEED); // Multiply by configured turn speed
-		if (RESPECT_MAX) {
-			// if (controller.getRawButton(5)) { // Ignore the advanced drive
-			// drive.tankDrive(-(controller.getY() / 1.25) + (-controller.getRawAxis(5) /
-			// 2),
-			// (-controller.getY() / 1.25) + -(-controller.getRawAxis(5) / 2));
-			// }
-
-			if (currentSpeed != ticksTillFullSpeed) {
-				currentSpeed++; // Calculate the next tick speed based off maxSpeed / ticksTillFullSpeed
-				if (rightStick <= (incrementSpeed * currentSpeed)) {
-					drive.tankDrive(rightStick + (-leftStick * movementSpeedMultiplier),
-							rightStick + (leftStick * movementSpeedMultiplier));
-				} else {
-					drive.tankDrive((incrementSpeed * currentSpeed) + (-leftStick * movementSpeedMultiplier),
-							(incrementSpeed * currentSpeed) + (leftStick * movementSpeedMultiplier));
-				}
-			} else {
-				drive.tankDrive(rightStick + (-leftStick * movementSpeedMultiplier),
-						rightStick + (leftStick * movementSpeedMultiplier));
-			}
-			// double acclerationValue = (respectedValue / ticksTillFullSpeed) *
-			// currentSpeed;
-		}
 	}
 }
